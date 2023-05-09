@@ -37,7 +37,7 @@ class _HomePageState extends State<HomePage> {
                   fit: BoxFit.cover,
                 ),
                 header: Icon(Icons.more_vert),
-                footer: Text("Book Picture"),
+                footer: Text("This is a footer"),
               ),
             );
           }),
