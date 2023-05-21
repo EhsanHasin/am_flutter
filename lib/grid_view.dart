@@ -56,11 +56,8 @@ class _HomePageState extends State<HomePage> {
 }
 
 class FullScreenPhoto extends StatelessWidget {
-
   FullScreenPhoto({Key? key, this.photo}) : super(key: key);
-
   var photo;
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
