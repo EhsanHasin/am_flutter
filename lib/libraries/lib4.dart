@@ -6,7 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:text_to_speech/text_to_speech.dart';
 
 void main() => runApp(MaterialApp(
-      title: "e7 App",
+      title: "english words and text_to_speech",
       theme: ThemeData(primarySwatch: Colors.blue),
       debugShowCheckedModeBanner: false,
       home: HomePage(),
