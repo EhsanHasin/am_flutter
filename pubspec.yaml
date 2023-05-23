@@ -15,6 +15,7 @@ dependencies:
   text_to_speech: ^0.2.3
   share_plus: ^7.0.1
   photo_view: ^0.14.0
+  flutter_spinkit: ^5.2.0
 
 
 dev_dependencies:
