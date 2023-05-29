@@ -1,19 +1,12 @@
 # am_flutter
 
-this is a progject for Am class
+This project is for practicing flutter concepts in the class.
 
-## Getting Started
+## Class Details
+2023
+WASSA, Code4Fun, AM(morning) class.
 
-This project is a starting point for a Flutter application.
+## Class Images
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-
-## موضوعات اضافی
-در ای نقسمت ...
+![photo_2023-05-15_15-39-28](https://github.com/EhsanHasin/am_flutter/assets/32514844/ea034cc9-8710-47ac-a8ff-a5ad3fee1c36)
+![photo_2023-05-15_15-39-24](https://github.com/EhsanHasin/am_flutter/assets/32514844/eb673fce-b83e-446e-affb-a0eb51c82cf5)
