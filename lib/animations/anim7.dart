@@ -25,8 +25,12 @@ class _HomePageState extends State<HomePage>
   void initState() {
     super.initState();
 
-    controller =
-        AnimationController(vsync: this, duration: Duration(seconds: 2,), reverseDuration: Duration(seconds: 2));
+    controller = AnimationController(
+        vsync: this,
+        duration: Duration(
+          seconds: 2,
+        ),
+        reverseDuration: Duration(seconds: 2));
 
     // controller.forward();
     // controller.repeat(reverse: true);
@@ -42,27 +46,27 @@ class _HomePageState extends State<HomePage>
       ),
       body: Center(
         child: GestureDetector(
-          onTap: (){
-            if(state){
-              controller.forward();
-              state = false;
-            }else{
-              controller.reverse();
-              state = true;
-            }
-
-          },
+            onTap: () {
+              if (state) {
+                controller.forward();
+                state = false;
+              } else {
+                controller.reverse();
+                state = true;
+              }
+            },
             child: AnimatedIcon(
-          icon: AnimatedIcons.play_pause,
-          progress: animation,
-          size: 50,
-        )),
+              icon: AnimatedIcons.play_pause,
+              progress: animation,
+              size: 50,
+            )),
       ),
     );
   }
 
   @override
   void dispose() {
+    controller.dispose();
     super.dispose();
   }
 }
