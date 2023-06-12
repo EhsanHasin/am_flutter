@@ -44,8 +44,8 @@ class _HomePageState extends State<HomePage> {
         join(await getDatabasesPath(), "notesDB.db"),
         onCreate: (db,ver){
           db.execute('''CREATE TABLE notes(
-              not_id INT primary key
-              not_title TEXT
+              not_id INT primary key,
+              not_title TEXT,
               not_description TEXT
           )'''
           );
@@ -54,10 +54,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // insertNote(){
-  //   database.insert("notes", {});
-  // }
-
+  Future<void> insertNote(Note note)async{
+    await database.insert(
+        "notes",
+        note.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,18 +104,9 @@ class _HomePageState extends State<HomePage> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
-                        onPressed: ()async{
-
+                        onPressed: (){
                           var tempNote = Note(id: int.parse(noteId), title: noteTitle, description: noteDescription);
-                          await database.insert(
-                              "notes",
-                              {
-                                "not_id": int.parse(noteId),
-                                "not_title": noteTitle,
-                                "not_description": noteDescription
-                              },
-                            conflictAlgorithm: ConflictAlgorithm.replace
-                          );
+                          insertNote(tempNote);
                         },
                         child: Text("Save Note")),
                   ),
@@ -194,5 +188,12 @@ class Note{
 
   Note({required this.id, required this.title, required this.description});
 
+  Map<String, dynamic> toMap(){
+    return {
+      "not_id": id,
+      "not_title": title,
+      "not_description": description
+    };
+  }
 
 }
