@@ -24,16 +24,40 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  var nodeId, noteTitile, NoteDescription;
+  late Database database;
+  var noteId, noteTitle, noteDescription;
   var tecId = TextEditingController();
-  var tecName = TextEditingController();
-  var tecAge = TextEditingController();
-  List<String> notes = List.empty(growable: true);
+  var tecTitle = TextEditingController();
+  var tecDescription = TextEditingController();
+  List<Note> notes = List.empty(growable: true);
 
   @override
-  void initState() {
+  void initState(){
     super.initState();
+
+    openDB();
+
   }
+
+  openDB() async{
+    database = await openDatabase(
+        join(await getDatabasesPath(), "notesDB.db"),
+        onCreate: (db,ver){
+          db.execute('''CREATE TABLE notes(
+              not_id INT primary key
+              not_title TEXT
+              not_description TEXT
+          )'''
+          );
+      },
+        version: 1,
+    );
+  }
+
+  // insertNote(){
+  //   database.insert("notes", {});
+  // }
+
 
   @override
   Widget build(BuildContext context) {
@@ -55,32 +79,40 @@ class _HomePageState extends State<HomePage> {
                 controller: tecId,
                 decoration: InputDecoration(hintText: "Enter Note id", label: Text("Id")),
                 onChanged: (id) {
-                  this.nodeId = id;
+                  this.noteId = id;
                 },
               ),
               TextField(
-                controller: tecName,
+                controller: tecTitle,
                 decoration: InputDecoration(hintText: "Enter Note title", label: Text("Title")),
                 onChanged: (title) {
-                  this.noteTitile = title;
+                  this.noteTitle = title;
                 },
               ),
               TextField(
-                controller: tecAge,
+                controller: tecDescription,
                 decoration: InputDecoration(hintText: "Enter Note Description", label: Text("Description")),
                 onChanged: (desc) {
-                  this.NoteDescription = desc;
+                  this.noteDescription = desc;
                 },
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Wrap(
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
-                        onPressed: (){
+                        onPressed: ()async{
 
-
+                          var tempNote = Note(id: int.parse(noteId), title: noteTitle, description: noteDescription);
+                          await database.insert(
+                              "notes",
+                              {
+                                "not_id": int.parse(noteId),
+                                "not_title": noteTitle,
+                                "not_description": noteDescription
+                              },
+                            conflictAlgorithm: ConflictAlgorithm.replace
+                          );
                         },
                         child: Text("Save Note")),
                   ),
@@ -124,16 +156,16 @@ class _HomePageState extends State<HomePage> {
                         leading: CircleAvatar(
                           radius: 40,
                           backgroundColor: Colors.lightBlueAccent,
-                          child: Text(notes[i][i]),
+                          child: Text(notes[i].id.toString()),
                         ),
                         title: Text(
-                          notes[i],
+                          notes[i].title,
                           style: TextStyle(
                             fontSize: 20,
                           ),
                         ),
                         subtitle: Text(
-                          notes[i],
+                          notes[i].description,
                           style: TextStyle(
                             fontSize: 15,
                           ),
@@ -147,5 +179,20 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+}
+
+class Note{
+  final int id;
+  final String title;
+  final String description;
+
+  Note({required this.id, required this.title, required this.description});
+
 
 }
