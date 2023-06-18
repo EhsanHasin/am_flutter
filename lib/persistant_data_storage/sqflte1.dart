@@ -5,6 +5,8 @@ import 'package:flutter/widgets.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +25,14 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
+final String NOTE_TABLE_NAME = "notes";
+final String NOTE_ID = "not_id";
+final String NOTE_TITLE = "not_title";
+final String NOTE_DESCRIPTION = "not_description";
+
+
 class _HomePageState extends State<HomePage> {
+  var factory = databaseFactoryFfiWeb;
   late Database database;
   var noteId, noteTitle, noteDescription;
   var tecId = TextEditingController();
@@ -40,18 +49,37 @@ class _HomePageState extends State<HomePage> {
   }
 
   openDB() async{
-    database = await openDatabase(
-        join(await getDatabasesPath(), "notesDB.db"),
-        onCreate: (db,ver){
-          db.execute('''CREATE TABLE notes(
-              not_id INT primary key,
-              not_title TEXT,
-              not_description TEXT
-          )'''
-          );
-      },
-        version: 1,
-    );
+    // Init ffi loader if needed.
+    sqfliteFfiInit();
+
+    var databaseFactory = databaseFactoryFfiWeb;
+    var db = await databaseFactory.openDatabase(inMemoryDatabasePath);
+    await db.execute('''
+  CREATE TABLE Product (
+      id INTEGER PRIMARY KEY,
+      title TEXT
+  )
+  ''');
+    await db.insert('Product', <String, Object?>{'title': 'Product 1'});
+    await db.insert('Product', <String, Object?>{'title': 'Product 1'});
+
+    var result = await db.query('Product');
+    print(result);
+    // prints [{id: 1, title: Product 1}, {id: 2, title: Product 1}]
+    await db.close();
+
+    // database = await factory.openDatabase(
+    //     join(await getDatabasesPath(), "notesDB.db"),
+      //   onCreate: (db,ver){
+      //     db.execute('''CREATE TABLE $NOTE_TABLE_NAME(
+      //         $NOTE_ID INT primary key,
+      //         $NOTE_TITLE TEXT,
+      //         $NOTE_DESCRIPTION TEXT
+      //     )'''
+      //     );
+      // },
+      //   version: 1,
+    // );
   }
 
   Future<void> insertNote(Note note)async{
@@ -59,6 +87,18 @@ class _HomePageState extends State<HomePage> {
         "notes",
         note.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace
+    );
+  }
+
+  Future<List<Note>> getNotes()async{
+    List<Map<String,dynamic>> maps = await database.query("notes");
+    return List.generate(
+        maps.length, (i) =>
+        Note(
+            id: maps[i][NOTE_ID],
+            title: maps[i][NOTE_TITLE],
+            description: maps[i][NOTE_DESCRIPTION]
+        )
     );
   }
 
@@ -107,14 +147,19 @@ class _HomePageState extends State<HomePage> {
                         onPressed: (){
                           var tempNote = Note(id: int.parse(noteId), title: noteTitle, description: noteDescription);
                           insertNote(tempNote);
+                          // Fluttertoast.showToast(msg: "Inserted :)", backgroundColor: Colors.greenAccent);
                         },
                         child: Text("Save Note")),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
-                        onPressed: (){
+                        onPressed: ()async{
+                          notes.clear();
+                          notes = await getNotes();
+                          setState(() {
 
+                          });
                         },
                         child: Text("List All Notes")),
                   ),
