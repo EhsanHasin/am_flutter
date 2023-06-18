@@ -5,8 +5,6 @@ import 'package:flutter/widgets.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,88 +23,113 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-final String NOTE_TABLE_NAME = "notes";
-final String NOTE_ID = "not_id";
-final String NOTE_TITLE = "not_title";
-final String NOTE_DESCRIPTION = "not_description";
-
-
 class _HomePageState extends State<HomePage> {
-  var factory = databaseFactoryFfiWeb;
   late Database database;
-  var noteId, noteTitle, noteDescription;
+  var id, name, age;
   var tecId = TextEditingController();
-  var tecTitle = TextEditingController();
-  var tecDescription = TextEditingController();
-  List<Note> notes = List.empty(growable: true);
+  var tecName = TextEditingController();
+  var tecAge = TextEditingController();
+  List<Dog> allDogs = List.empty(growable: true);
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
-
     openDB();
-
   }
 
-  openDB() async{
-    // Init ffi loader if needed.
-    sqfliteFfiInit();
-
-    var databaseFactory = databaseFactoryFfiWeb;
-    var db = await databaseFactory.openDatabase(inMemoryDatabasePath);
-    await db.execute('''
-  CREATE TABLE Product (
-      id INTEGER PRIMARY KEY,
-      title TEXT
-  )
-  ''');
-    await db.insert('Product', <String, Object?>{'title': 'Product 1'});
-    await db.insert('Product', <String, Object?>{'title': 'Product 1'});
-
-    var result = await db.query('Product');
-    print(result);
-    // prints [{id: 1, title: Product 1}, {id: 2, title: Product 1}]
-    await db.close();
-
-    // database = await factory.openDatabase(
-    //     join(await getDatabasesPath(), "notesDB.db"),
-      //   onCreate: (db,ver){
-      //     db.execute('''CREATE TABLE $NOTE_TABLE_NAME(
-      //         $NOTE_ID INT primary key,
-      //         $NOTE_TITLE TEXT,
-      //         $NOTE_DESCRIPTION TEXT
-      //     )'''
-      //     );
-      // },
-      //   version: 1,
-    // );
-  }
-
-  Future<void> insertNote(Note note)async{
-    await database.insert(
-        "notes",
-        note.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace
+  openDB() async {
+    database = await openDatabase(
+      join(await getDatabasesPath(), "dog_database.db"),
+      onCreate: (db, version) {
+        db.execute("CREATE TABLE dogs(id INT PRIMARY KEY, name TEXT, age INT)");
+      },
+      version: 1,
     );
   }
 
-  Future<List<Note>> getNotes()async{
-    List<Map<String,dynamic>> maps = await database.query("notes");
-    return List.generate(
-        maps.length, (i) =>
-        Note(
-            id: maps[i][NOTE_ID],
-            title: maps[i][NOTE_TITLE],
-            description: maps[i][NOTE_DESCRIPTION]
-        )
+  Future<void> insertDog(Dog dog) async {
+    int result = await database.insert(
+      'dogs',
+      dog.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
+    if (result != 0) {
+      Fluttertoast.showToast(
+          msg: "Inserted dog with id = $result",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM_LEFT,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          fontSize: 16.0);
+    } else {
+      throw Exception("Problem in Insertion the Dog in database");
+    }
+  }
+
+  Future<List<Dog>> getAllDogs() async {
+    // Query the table for all The Dogs.
+    final List<Map<String, dynamic>> maps = await database.query('dogs');
+
+    // Convert the List<Map<String, dynamic> into a List<Dog>.
+    return List.generate(maps.length, (i) {
+      return Dog(
+        id: maps[i]['id'],
+        name: maps[i]['name'],
+        age: maps[i]['age'],
+      );
+    });
+  }
+
+  Future<Dog> getDogById(int id) async {
+    // Query the table for all The Dogs.
+    final List<Map<String, dynamic>> maps = await database.query('dogs', where: "id = ?", whereArgs: [id]);
+
+    if(maps.isEmpty)
+      return Dog(id: 0, name: "Null", age: 0);
+
+    // Convert the List<Map<String, dynamic> into a List<Dog>.
+    return Dog(
+      id: maps[0]['id'],
+      name: maps[0]['name'],
+      age: maps[0]['age'],
+    );
+  }
+
+  Future<void> deleteDogById(int id) async {
+    int count = await database.delete("dogs", where: "id = ?", whereArgs: [id]);
+    if (count != 0) {
+      Fluttertoast.showToast(
+          msg: "dog with id = $id deleted.",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM_LEFT,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          fontSize: 16.0);
+    } else {
+      throw Exception("Problem in Deletion the Dog in database");
+    }
+  }
+
+  Future<void> deleteDogs() async {
+    int count = await database.delete("dogs");
+    if (count != 0) {
+      Fluttertoast.showToast(
+          msg: "All dogs deleted.",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM_LEFT,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          fontSize: 16.0);
+    } else {
+      throw Exception("Problem in Deletion the Dogs in database");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("DB App"),
+        title: Text("e7 App"),
       ),
       body: Center(
         child: Padding(
@@ -120,68 +143,96 @@ class _HomePageState extends State<HomePage> {
               ),
               TextField(
                 controller: tecId,
-                decoration: InputDecoration(hintText: "Enter Note id", label: Text("Id")),
+                decoration: InputDecoration(hintText: "Enter id", label: Text("Id")),
                 onChanged: (id) {
-                  this.noteId = id;
+                  this.id = id;
                 },
               ),
               TextField(
-                controller: tecTitle,
-                decoration: InputDecoration(hintText: "Enter Note title", label: Text("Title")),
-                onChanged: (title) {
-                  this.noteTitle = title;
+                controller: tecName,
+                decoration: InputDecoration(hintText: "Enter name", label: Text("Name")),
+                onChanged: (name) {
+                  this.name = name;
                 },
               ),
               TextField(
-                controller: tecDescription,
-                decoration: InputDecoration(hintText: "Enter Note Description", label: Text("Description")),
-                onChanged: (desc) {
-                  this.noteDescription = desc;
+                controller: tecAge,
+                decoration: InputDecoration(hintText: "Enter your age", label: Text("Age")),
+                onChanged: (age) {
+                  this.age = age;
                 },
               ),
-              Wrap(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
-                        onPressed: (){
-                          var tempNote = Note(id: int.parse(noteId), title: noteTitle, description: noteDescription);
-                          insertNote(tempNote);
-                          // Fluttertoast.showToast(msg: "Inserted :)", backgroundColor: Colors.greenAccent);
+                        onPressed: () async {
+                          var dog = Dog(
+                              id: int.parse(id),
+                              name: name,
+                              age: int.parse(age));
+                          await insertDog(dog);
+                          emptyFormFields();
                         },
-                        child: Text("Save Note")),
+                        child: Text("Save dog")),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
-                        onPressed: ()async{
-                          notes.clear();
-                          notes = await getNotes();
-                          setState(() {
-
-                          });
+                        onPressed: () async {
+                          allDogs = await getAllDogs();
+                          setState(() {});
                         },
-                        child: Text("List All Notes")),
+                        child: Text("List All Dogs")),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
-                        onPressed: (){
+                        onPressed: () async {
+                          if(tecId.text.isEmpty){
+                            Fluttertoast.showToast(
+                                msg: "Enter id to delete",
+                                toastLength: Toast.LENGTH_SHORT,
+                                gravity: ToastGravity.BOTTOM_LEFT,
+                                backgroundColor: Colors.yellow,
+                                textColor: Colors.black,
+                                fontSize: 16.0);
+                            return;
+                          }
+                          deleteDogById(int.parse(id));
+                          setState(() {});
                         },
                         child: Text("Delete by Id")),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
-                        onPressed: (){
-
+                        onPressed: () async {
+                          await deleteDogs();
+                          setState(() {});
                         },
                         child: Text("Delete All")),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
-                        onPressed: (){
+                        onPressed: () async {
+                          if(tecId.text.isEmpty){
+                            Fluttertoast.showToast(
+                                msg: "Enter id to search",
+                                toastLength: Toast.LENGTH_SHORT,
+                                gravity: ToastGravity.BOTTOM_LEFT,
+                                backgroundColor: Colors.yellow,
+                                textColor: Colors.black,
+                                fontSize: 16.0);
+                            return;
+                          }
+                          Dog dog = await getDogById(int.parse(id));
+                          allDogs.clear();
+                          allDogs.add(dog);
+                          setState(() {});
                         },
                         child: Text("Search by id")),
                   ),
@@ -189,22 +240,23 @@ class _HomePageState extends State<HomePage> {
               ),
               Expanded(
                 child: ListView.builder(
-                    itemCount: notes.length,
+                    itemCount: allDogs.length,
                     itemBuilder: (c, i) {
+                      var tempDog = allDogs[i];
                       return ListTile(
                         leading: CircleAvatar(
                           radius: 40,
                           backgroundColor: Colors.lightBlueAccent,
-                          child: Text(notes[i].id.toString()),
+                          child: Text(tempDog.id.toString()),
                         ),
                         title: Text(
-                          notes[i].title,
+                          tempDog.name,
                           style: TextStyle(
                             fontSize: 20,
                           ),
                         ),
                         subtitle: Text(
-                          notes[i].description,
+                          tempDog.age.toString(),
                           style: TextStyle(
                             fontSize: 15,
                           ),
@@ -219,26 +271,31 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  @override
-  void dispose() {
-    super.dispose();
+  void emptyFormFields() {
+    setState(() {
+      tecId.clear();
+      tecName.clear();
+      tecAge.clear();
+    });
   }
-
 }
 
-class Note{
+class Dog {
   final int id;
-  final String title;
-  final String description;
+  final String name;
+  final int age;
+  Dog({required this.id, required this.name, required this.age});
 
-  Note({required this.id, required this.title, required this.description});
-
-  Map<String, dynamic> toMap(){
+  Map<String, dynamic> toMap() {
     return {
-      "not_id": id,
-      "not_title": title,
-      "not_description": description
+      'id': id,
+      'name': name,
+      'age': age,
     };
   }
 
+  @override
+  String toString() {
+    return "Dog{id: $id, name: $name, age: $age}";
+  }
 }
